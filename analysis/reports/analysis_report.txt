@@ -1,0 +1,58 @@
+
+======================================================================
+JOB SCRAPING ANALYSIS REPORT
+Generated: 2026-03-19 16:08:35
+======================================================================
+
+DATASET OVERVIEW:
+- Total jobs extracted: 20
+- Date range: March 02 2026 to March 20 2026
+- Unique companies: 4
+- Unique locations: 11
+
+EMPLOYMENT TYPE BREAKDOWN:
+employment_type
+Full-time     19
+Internship     1
+
+DEPARTMENT BREAKDOWN:
+department
+Engineering          8
+Marketing            2
+Operations           2
+Data                 1
+Sales                1
+Product              1
+Design               1
+Quality Assurance    1
+Finance              1
+Human Resources      1
+
+TOP 10 LOCATIONS:
+location
+CA [REMOTE]     4
+NY [HYBRID]     3
+TX [ON-SITE]    3
+TX [HYBRID]     2
+NY [REMOTE]     2
+WA [REMOTE]     1
+CA [ON-SITE]    1
+WA [ON-SITE]    1
+NY [ON-SITE]    1
+CA [HYBRID]     1
+
+TOP 10 COMPANIES:
+company_name
+San Francisco    6
+New York         6
+Austin           5
+Seattle          3
+
+DATA QUALITY METRICS:
+- Complete job titles: 20 / 20
+- Complete descriptions: 20 / 20
+- Jobs with skills: 20 / 20
+
+======================================================================
+Report generated successfully. Check reports/ directory for visualizations.
+======================================================================
