@@ -20,6 +20,7 @@ class JobItem(scrapy.Item):
         - job_description: Full job description text
         - required_skills: List of required skills
         - extracted_timestamp: When the job was extracted
+        - source: Source platform identifier
     """
     
     job_title = scrapy.Field()
@@ -32,3 +33,4 @@ class JobItem(scrapy.Item):
     job_description = scrapy.Field()
     required_skills = scrapy.Field()
     extracted_timestamp = scrapy.Field()
+    source = scrapy.Field()

@@ -25,19 +25,21 @@ from selenium.common.exceptions import (
 import os
 import sys
 
+# logging writes to ../logs/..., ensure the directory exists before
+# configuring FileHandler.
+log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'logs')
+os.makedirs(log_dir, exist_ok=True)
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s',
     handlers=[
-        logging.FileHandler('../logs/selenium_scraper.log'),
+        logging.FileHandler(os.path.join(log_dir, 'selenium_scraper.log')),
         logging.StreamHandler()
     ]
 )
 logger = logging.getLogger(__name__)
-
-# Create logs directory if it doesn't exist
-os.makedirs('../logs', exist_ok=True)
 
 
 class AshbyJobScraper:
@@ -53,7 +55,7 @@ class AshbyJobScraper:
     
     def __init__(self):
         """Initialize the scraper with WebDriver configuration."""
-        self.base_url = "https://jobs.ashbyhq.com/ashby-embed-demo-org"
+        self.base_url = "https://jobs.ashbyhq.com/ramp"
         self.driver = None
         self.job_links = []
         self.wait = None
@@ -65,20 +67,20 @@ class AshbyJobScraper:
             logger.info("Initializing WebDriver...")
             edge_options = EdgeOptions()
             
-            # Recommended options for stability
+            # Run headless for automation
+            edge_options.add_argument("--headless=new")
             edge_options.add_argument("--no-sandbox")
             edge_options.add_argument("--disable-dev-shm-usage")
+            edge_options.add_argument("--disable-gpu")
+            edge_options.add_argument("--window-size=1920,1080")
             edge_options.add_argument("--disable-blink-features=AutomationControlled")
             edge_options.add_experimental_option("excludeSwitches", ["enable-automation"])
             edge_options.add_experimental_option('useAutomationExtension', False)
             
-            # Optional: Run in headless mode (uncomment to hide browser window)
-            # edge_options.add_argument("--headless")
-            
             self.driver = webdriver.Edge(options=edge_options)
-            self.wait = WebDriverWait(self.driver, timeout=15)
+            self.wait = WebDriverWait(self.driver, timeout=60)
             
-            logger.info("WebDriver initialized successfully")
+            logger.info("WebDriver initialized successfully (headless)")
             
         except Exception as e:
             logger.error(f"Failed to initialize WebDriver: {e}")
@@ -101,13 +103,44 @@ class AshbyJobScraper:
         try:
             logger.info(f"Navigating to {self.base_url}...")
             self.driver.get(self.base_url)
-            time.sleep(self.polite_delay)
-            
-            # Wait for job board to load
-            self.wait.until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, "[data-testid='job-board']"))
-            )
-            logger.info("Job board loaded successfully")
+            time.sleep(5)  # Allow JS to fully render
+
+            # Broad XPath: match any <a> with /job/ in its href
+            job_link_xpath = "//a[contains(@href, '/job/')]" 
+
+            # Ashby job portals are often embedded; job links may live in an iframe.
+            iframes = self.driver.find_elements(By.TAG_NAME, "iframe")
+            logger.info(f"Found {len(iframes)} iframe(s) on page")
+
+            def wait_for_links():
+                self.wait.until(
+                    EC.presence_of_all_elements_located((By.XPATH, job_link_xpath))
+                )
+
+            # Try each iframe first; if none work, fall back to default content.
+            for idx, frame in enumerate(iframes):
+                try:
+                    self.driver.switch_to.default_content()
+                    self.driver.switch_to.frame(frame)
+                    wait_for_links()
+                    logger.info(f"Job board loaded successfully inside iframe[{idx}]")
+                    return
+                except TimeoutException:
+                    continue
+
+            # Fallback: try the top-level DOM.
+            self.driver.switch_to.default_content()
+            try:
+                wait_for_links()
+                logger.info("Job board loaded successfully (default content)")
+            except TimeoutException:
+                # Last resort: check if ANY links exist on the page
+                all_links = self.driver.find_elements(By.TAG_NAME, "a")
+                logger.warning(f"Timeout waiting for job links via XPath; found {len(all_links)} total <a> tags on page")
+                if all_links:
+                    logger.info("Proceeding with available links on the page")
+                else:
+                    raise
             
         except TimeoutException:
             logger.error("Timeout waiting for job board to load")
@@ -158,20 +191,24 @@ class AshbyJobScraper:
         try:
             logger.info("Extracting job links...")
             
-            # XPath for job listings - adjust based on actual HTML structure
-            job_elements = self.wait.until(
-                EC.presence_of_all_elements_located((By.XPATH, "//a[@class='job-board-item'] | //a[contains(@href, '/job/')]"))
-            )
+            # Find all links containing /job/ in href
+            job_elements = self.driver.find_elements(By.XPATH, "//a[contains(@href, '/job/')]")
+            
+            if not job_elements:
+                # Broader fallback: any link on the page that looks like a job URL
+                all_links = self.driver.find_elements(By.TAG_NAME, "a")
+                for link in all_links:
+                    href = link.get_attribute('href') or ''
+                    if 'ashbyhq.com' in href and '/job' in href:
+                        job_elements.append(link)
             
             logger.info(f"Found {len(job_elements)} job elements")
             
             for idx, element in enumerate(job_elements, 1):
                 try:
-                    # Extract href attribute
                     url = element.get_attribute('href')
                     
-                    if url and ('jobs.ashbyhq.com' in url or url.startswith('/')):
-                        # Convert relative URLs to absolute
+                    if url and ('ashbyhq.com' in url or url.startswith('/')):
                         if url.startswith('/'):
                             full_url = "https://jobs.ashbyhq.com" + url
                         else:
@@ -198,13 +235,15 @@ class AshbyJobScraper:
             logger.error(f"Error extracting job links: {e}")
             raise
     
-    def save_links_to_csv(self, output_path='../data/raw/job_links.csv'):
+    def save_links_to_csv(self, output_path=None):
         """
         Save extracted job links to CSV file.
         
         Args:
             output_path (str): Path to save CSV file
         """
+        if output_path is None:
+            output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'raw', 'job_links.csv')
         try:
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
             

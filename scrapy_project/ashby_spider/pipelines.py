@@ -6,16 +6,19 @@ import csv
 import logging
 from datetime import datetime
 from itemadapter import ItemAdapter
+from scrapy.exceptions import DropItem
 import os
 
 
 class AshbyPipeline:
     """
     Data cleaning and processing pipeline.
+    Accepts all scraped jobs, cleans data, and normalises fields.
     """
     
     def __init__(self):
         self.logger = logging.getLogger(__name__)
+        self.accepted_count = 0
     
     def process_item(self, item, spider):
         """
@@ -30,6 +33,9 @@ class AshbyPipeline:
         """
         adapter = ItemAdapter(item)
         
+        self.accepted_count += 1
+        self.logger.info(f"✓ Accepted: {adapter.get('job_title')} at {adapter.get('company_name')}")
+        
         # Clean whitespace from all fields
         for field_name in adapter.field_names():
             if isinstance(adapter.get(field_name), str):
@@ -38,7 +44,6 @@ class AshbyPipeline:
         # Ensure skills is a list
         if adapter.get('required_skills'):
             if isinstance(adapter['required_skills'], str):
-                # Convert comma-separated string to list
                 adapter['required_skills'] = [
                     skill.strip() 
                     for skill in adapter['required_skills'].split(',')
@@ -50,8 +55,15 @@ class AshbyPipeline:
         if not adapter.get('extracted_timestamp'):
             adapter['extracted_timestamp'] = datetime.now().isoformat()
         
-        self.logger.debug(f"Processed item: {adapter.get('job_title')}")
         return item
+    
+    def close_spider(self, spider):
+        """Report statistics when spider closes"""
+        self.logger.info(f"\n{'='*60}")
+        self.logger.info(f"SUMMARY ({spider.name})")
+        self.logger.info(f"{'='*60}")
+        self.logger.info(f"Total jobs accepted:    {self.accepted_count}")
+        self.logger.info(f"{'='*60}\n")
 
 
 class CSVExportPipeline:
@@ -76,6 +88,7 @@ class CSVExportPipeline:
             'job_url',
             'job_description',
             'required_skills',
+            'source',
             'extracted_timestamp'
         ]
     
@@ -88,12 +101,19 @@ class CSVExportPipeline:
         """
         try:
             os.makedirs(os.path.dirname(self.output_path), exist_ok=True)
-            
-            self.file = open(self.output_path, 'w', newline='', encoding='utf-8')
+            file_exists = os.path.exists(self.output_path)
+            file_is_empty = (not file_exists) or os.path.getsize(self.output_path) == 0
+
+            # Append so multiple spiders can contribute to the same CSV.
+            # Only write the header once.
+            self.file = open(self.output_path, 'a', newline='', encoding='utf-8')
             self.writer = csv.DictWriter(self.file, fieldnames=self.fields)
-            self.writer.writeheader()
-            
-            self.logger.info(f"Opened CSV file for export: {self.output_path}")
+            if file_is_empty:
+                self.writer.writeheader()
+
+            self.logger.info(
+                f"Opened CSV file for export (append): {self.output_path}"
+            )
         except Exception as e:
             self.logger.error(f"Error opening CSV file: {e}")
             raise

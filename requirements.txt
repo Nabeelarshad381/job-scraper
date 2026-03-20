@@ -7,7 +7,8 @@ webdriver-manager>=3.9.0
 
 # Scrapy - Web Scraping Framework
 scrapy>=2.9.0
-scrapy-rotate-ua>=0.4.0
+# Optional UA rotation was referenced previously, but the dependency is not available
+# in this environment and it is not used by the current spiders.
 
 # Data Processing
 pandas>=2.0.0

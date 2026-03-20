@@ -74,10 +74,10 @@ class JobDataAnalyzer:
             logger.info(f"Removed duplicates. {len(self.df)} records remaining")
             
             # Fill missing values
-            self.df['location'].fillna('Not specified', inplace=True)
-            self.df['department'].fillna('General', inplace=True)
-            self.df['employment_type'].fillna('Full-time', inplace=True)
-            self.df['required_skills'].fillna('', inplace=True)
+            self.df['location'] = self.df['location'].fillna('Not specified')
+            self.df['department'] = self.df['department'].fillna('General')
+            self.df['employment_type'] = self.df['employment_type'].fillna('Full-time')
+            self.df['required_skills'] = self.df['required_skills'].fillna('')
             
             logger.info("Data cleaning completed")
             
@@ -354,6 +354,10 @@ Report generated successfully. Check reports/ directory for visualizations.
             if not self.load_data():
                 return False
             
+            if len(self.df) == 0:
+                logger.warning("No data to analyse – CSV is empty.")
+                return False
+            
             self.clean_data()
             
             # Run all analyses
@@ -378,9 +382,11 @@ Report generated successfully. Check reports/ directory for visualizations.
 
 def main():
     """Main entry point for analysis script."""
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    project_dir = os.path.dirname(script_dir)
     analyzer = JobDataAnalyzer(
-        csv_path='../data/final/jobs.csv',
-        output_dir='./reports'
+        csv_path=os.path.join(project_dir, 'data', 'final', 'jobs.csv'),
+        output_dir=os.path.join(script_dir, 'reports')
     )
     analyzer.run_full_analysis()
 

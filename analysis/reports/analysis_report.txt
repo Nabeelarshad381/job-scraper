@@ -1,57 +1,58 @@
 
 ======================================================================
 JOB SCRAPING ANALYSIS REPORT
-Generated: 2026-03-19 16:08:35
+Generated: 2026-03-20 23:34:47
 ======================================================================
 
 DATASET OVERVIEW:
-- Total jobs extracted: 20
-- Date range: March 02 2026 to March 20 2026
-- Unique companies: 4
-- Unique locations: 11
+- Total jobs extracted: 157
+- Date range: 2023-03-09 to 2026-03-20
+- Unique companies: 3
+- Unique locations: 27
 
 EMPLOYMENT TYPE BREAKDOWN:
 employment_type
-Full-time     19
-Internship     1
+Fulltime      127
+Full-time      20
+Internship      7
+Intern          3
 
 DEPARTMENT BREAKDOWN:
 department
-Engineering          8
-Marketing            2
-Operations           2
-Data                 1
-Sales                1
-Product              1
-Design               1
-Quality Assurance    1
-Finance              1
-Human Resources      1
+Sales                  49
+Engineering            30
+Marketing              11
+Full-time              11
+Internship              7
+Customer Experience     6
+People & Talent         6
+Product                 6
+Finance                 5
+Risk                    4
 
 TOP 10 LOCATIONS:
 location
-CA [REMOTE]     4
-NY [HYBRID]     3
-TX [ON-SITE]    3
-TX [HYBRID]     2
-NY [REMOTE]     2
-WA [REMOTE]     1
-CA [ON-SITE]    1
-WA [ON-SITE]    1
-NY [ON-SITE]    1
-CA [HYBRID]     1
+New York, NY (HQ) [HYBRID]                                   97
+New York, NY (HQ) [REMOTE]                                   10
+Los Angeles, California [ON-SITE]                             9
+Remote (US) [REMOTE]                                          6
+San Francisco, CA [HYBRID]                                    5
+Boston [ON-SITE]                                              4
+Washington, D.C. [REMOTE]                                     3
+Toronto, ON [HYBRID]                                          2
+Palo Alto, California [ON-SITE]                               2
+Palo Alto, California / Los Angeles, California [ON-SITE]     2
 
 TOP 10 COMPANIES:
 company_name
-San Francisco    6
-New York         6
-Austin           5
-Seattle          3
+Ramp           130
+Match Group     20
+Bevi             7
 
 DATA QUALITY METRICS:
-- Complete job titles: 20 / 20
-- Complete descriptions: 20 / 20
-- Jobs with skills: 20 / 20
+- Complete job titles: 157 / 157
+- Complete descriptions: 157 / 157
+- Jobs with skills: 157 / 157
 
 ======================================================================
 Report generated successfully. Check reports/ directory for visualizations.
