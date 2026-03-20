@@ -26,7 +26,8 @@ job scraper/
 ├── README.md                    [Full project documentation]
 ├── requirements.txt             [Python package dependencies]
 ├── .gitignore                   [Git exclusion rules]
-├── run_pipeline.py              [Complete workflow orchestrator]
+├── run_pipeline.py              [Single-source workflow orchestrator]
+├── run_all_spiders.py           [Multi-source workflow orchestrator]
 └── logs/                        [Execution logs directory]
 ```
 
@@ -55,9 +56,11 @@ scrapy_project/
     ├── pipelines.py             [Data cleaning & CSV export pipelines]
     └── spiders/
         ├── __init__.py
-        └── ashby_spider.py       [Main spider with extraction logic]
-            - 500+ lines of code
-            - 9 required field extraction
+        ├── ashby_spider.py       [Ashby spider for Ramp jobs]
+        ├── greenhouse_spider.py  [Greenhouse spider for Bevi jobs]
+        └── lever_spider.py       [Lever spider for Match Group jobs]
+            - 500+ lines of combined extraction logic
+            - 9 required field extraction per spider
             - Skill parsing & tagging
             - Location type classification
             - Item validation
@@ -122,7 +125,8 @@ docs/
 │   - Visualization details
 │   - Customization options
 │
-└── COMMANDS.md                  [Complete command reference]
+├── MULTIPLE_SOURCES.md          [Multi-source extraction guide]
+├── COMMANDS.md                  [Complete command reference]
     - All executable commands
     - Workflow sequences
     - Troubleshooting procedures
@@ -176,6 +180,10 @@ pip install -r requirements.txt
 
 ### 2. Execute Complete Pipeline (20-30 minutes)
 ```bash
+# To run all three spiders (Ashby, Greenhouse, Lever):
+python run_all_spiders.py
+
+# Or to run just the Ashby pipeline:
 python run_pipeline.py
 ```
 
